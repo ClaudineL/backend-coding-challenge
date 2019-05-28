@@ -6,24 +6,21 @@ from text_matching import subset_keys
 
 class City:
     """ Create a city object from an OrderedDict. """
-    def __init__(self, od, query, loc=None):
+    def __init__(self, od, query, loc=None, score=None):
         self.name = od['fullname']
         self.latitude = od['lat']
         self.longitude = od['long']
-        self.population = od['population']
+        self.population = int(od['population'])
         self.match = len(query) / len(self.name.split(',')[0])
-        self.score = 0
+        self.score = score
+
         if loc:
-            self.distance = distance.distance((self.latitude, self.longitude),
-                                               loc).km
+            self.distance = distance.distance((self.latitude, self.longitude),loc).km
         else:
             self.distance = 0
 
-    def set_score(self, score):
-        self.score = score
-
     def __repr__(self):
-        return repr((self.name, self.distance, self.population))
+        return repr((self.name, self.population))
 
 
 def score_results(matches, query, loc=None):
@@ -32,11 +29,11 @@ def score_results(matches, query, loc=None):
     matched in name, distance from coordinates (if provided) and population.
 
     :param matches: list of OrderedDicts containing matching towns
-    :param loc: tuple of latitude and longitude for the query
     :param query: town name to match
+    :param loc: tuple of latitude and longitude for the query
 
-    :return: town information ranked by matching confidence with associated
-    score in JSON format
+    :return: list of cities ranked by matching confidence with associated
+    score
     """
     city_objects = [City(od, query, loc) for od in matches]
 
@@ -53,7 +50,7 @@ def score_results(matches, query, loc=None):
     city_dictlist = []
     for city in s:
         city_dict = subset_keys(vars(city), 'name', 'latitude', 'longitude',
-                                'score')
+                                'population', 'score')
         city_dictlist.append(city_dict)
 
     return city_dictlist

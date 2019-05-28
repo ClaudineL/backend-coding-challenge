@@ -1,6 +1,29 @@
 from geopy import distance
-import numpy as np
-import pandas as pd
+from numpy import linspace, around
+from operator import attrgetter
+from text_matching import subset_keys
+
+
+class City:
+    """ Create a city object from an OrderedDict. """
+    def __init__(self, od, query, loc=None):
+        self.name = od['fullname']
+        self.latitude = od['lat']
+        self.longitude = od['long']
+        self.population = od['population']
+        self.match = len(query) / len(self.name.split(',')[0])
+        self.score = 0
+        if loc:
+            self.distance = distance.distance((self.latitude, self.longitude),
+                                               loc).km
+        else:
+            self.distance = 0
+
+    def set_score(self, score):
+        self.score = score
+
+    def __repr__(self):
+        return repr((self.name, self.distance, self.population))
 
 
 def score_results(matches, query, loc=None):
@@ -15,32 +38,22 @@ def score_results(matches, query, loc=None):
     :return: town information ranked by matching confidence with associated
     score in JSON format
     """
+    city_objects = [City(od, query, loc) for od in matches]
 
-    df = pd.DataFrame(matches)
-    df['coords'] = list(zip(df['lat'], df['long']))
+    s = sorted(city_objects, key=attrgetter('population'), reverse=True)
+    s = sorted(s, key=attrgetter('distance'), reverse=False)
+    s = sorted(s, key=attrgetter('match'), reverse=True)
 
-    if loc:
-        # Calculate distance between provided coordinates and those in list
-        df['distance'] = df['coords'].apply(distance.distance, args=(loc,))
-        df['distance'] = df['distance'].apply(lambda x: x.km)  # get num value
-    else:
-        df['distance'] = 0
+    # Adding scores
+    scores = around(linspace(1, 0, len(s)), 2)
+    for city, score in zip(s, scores):
+        city.score = score
 
-    #  Calculate proportion of letters matched between input and city name
-    df['match'] = df['name'].apply(lambda x: len(query) / len(x))
+    # Remove unnecessary fields and return as list of OrderedDicts
+    city_dictlist = []
+    for city in s:
+        city_dict = subset_keys(vars(city), 'name', 'latitude', 'longitude',
+                                'score')
+        city_dictlist.append(city_dict)
 
-    #  Sort according to match, distance and population
-    df = df.sort_values(['match', 'distance', 'population'],
-                        ascending=[False, True, False]).reset_index()
-
-    # Score based on number and order of results
-    df['score'] = np.round(np.linspace(1, 0, len(df.index)), 2)
-
-    # Remove unnecessary columns and convert back to JSON
-    cols = ['fullname', 'lat', 'long', 'score']
-    df2 = df[cols]
-    df2.columns = ['name', 'latitude', 'longitude', 'score']
-    # df2.to_json(orient='records', lines=True)
-    df2_list = df2.to_dict('records')
-
-    return df2_list
+    return city_dictlist

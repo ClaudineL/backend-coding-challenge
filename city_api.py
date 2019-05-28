@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from text_matching import text_match
 from scoring import score_results
-import pprint
 
 app = Flask(__name__)
 

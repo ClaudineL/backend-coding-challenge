@@ -1,0 +1,54 @@
+swagger: "2.0"
+info:
+  description: This is the swagger file that goes with our server code
+  version: "1.0.0"
+  title: Swagger ReST Article
+consumes:
+  - application/json
+produces:
+  - application/json
+
+basePath: /api
+
+# Paths supported by the server application
+paths:
+  /suggestions:
+    get:
+      operationId: city_api.get_cities
+      tags:
+        - city
+      summary: Look up matching city names
+      description: Look up matching city names
+      parameters:
+        - name: query
+          in: query
+          type: string
+          description: Querystring to match
+          required: true
+        - name: latitude
+          in: query
+          type: number
+          description: Latitude of query
+          required: false
+        - name: longitude
+          in: query
+          type: number
+          description: Longitude of query
+          required: false
+      responses:
+        200:
+          description: Successfully performed lookup
+          schema:
+            type: array
+            items:
+              properties:
+                name:
+                  type: string
+                latitude:
+                  type: string
+                longitude:
+                  type: string
+                population:
+                  type: integer
+                score:
+                  type: number

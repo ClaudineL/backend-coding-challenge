@@ -20,7 +20,7 @@ paths:
       summary: Look up matching city names
       description: Look up matching city names
       parameters:
-        - name: query
+        - name: q
           in: query
           type: string
           description: Querystring to match

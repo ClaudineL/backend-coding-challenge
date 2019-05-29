@@ -1,1 +1,1 @@
-web: gunicorn city_api:app
+web: gunicorn server:app

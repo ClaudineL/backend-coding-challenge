@@ -3,10 +3,11 @@ from numpy import linspace, around
 from operator import attrgetter
 from pathlib import Path
 import csv
+import markdown
 import re
 
 CITY_PATH = Path('./data/cities_canada-usa_reformat.tsv')
-
+MARKDOWN_PATH = Path('./data/api.md')
 
 class City:
     """ Create a city object from a dictionary. """
@@ -26,6 +27,11 @@ class City:
     def __repr__(self):
         return repr((self.name, self.population))
 
+
+def load_md():
+    with MARKDOWN_PATH.open(encoding='utf-8') as md_file:
+        md = markdown.markdown(md_file.read())
+    return md
 
 def get_cities(q, latitude=None, longitude=None):
     """ Look up names matching query and return JSON list. """
@@ -95,3 +101,47 @@ def score_results(matches, query, loc=None):
         city_dictlist.append(city_dict)
 
     return city_dictlist
+
+def check_inputs(query, latitude, longitude):
+
+    def invalid_query(query):
+        """ Make sure query is a string. """
+        if isinstance(query, str):
+            if re.search(r"[0-9]", query, re.UNICODE):
+                return {'error': 'City name must not contain numbers!'}
+            else:
+                return False
+        else:
+            return {'error': 'City name must be a string!'}
+
+    def missing_coords(latitude, longitude):
+        """ Make sure either both or no coordinates are present. """
+        if (latitude and longitude):
+            return False
+        elif (not latitude and longitude):
+            return {'error': 'Latitude is missing!'}
+        elif (latitude and not longitude):
+            return {'error': 'Longitude is missing!'}
+        else:
+            return False
+
+    def invalid_coords(coords):
+        """ Make sure coordinates are valid numbers """
+        for coord in coords:
+            if coord:
+                try:
+                    float(coord)
+                    return False
+                except ValueError:
+                    return {'error': 'Invalid coordinate(s)'}
+
+    # Is query a valid string?
+    check = invalid_query(query)
+    if not check:
+        # Is one of the coordinates missing?
+        check = missing_coords(latitude, longitude)
+        if not check:
+            # Can coordinates be parsed as floats?
+            check = invalid_coords([latitude, longitude])
+
+    return check

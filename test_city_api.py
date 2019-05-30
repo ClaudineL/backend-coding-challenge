@@ -42,6 +42,7 @@ class TestValidators(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_invalid_coord(self):
+        """ Make sure coordinates can be parsed to floats. """
         query = 'paris'
         latitude = 'thirtysix'
         longitude = '86'

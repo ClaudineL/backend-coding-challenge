@@ -29,6 +29,7 @@ class City:
 
 
 def load_md():
+    """ Return markdown object from markdown file. """
     with MARKDOWN_PATH.open(encoding='utf-8') as md_file:
         md = markdown.markdown(md_file.read())
     return md
@@ -45,7 +46,12 @@ def get_cities(q, latitude=None, longitude=None):
 
 
 def text_match(text):
-    """ Find cities that match input text. """
+    """ Find cities that match input text.
+
+    :param text: town name to match
+
+    :return: list of cities with query text in the name
+    """
     city_array = []
     with CITY_PATH.open(encoding='utf-8', newline='') as city_file:
         city_reader = csv.DictReader(city_file, delimiter='\t',
@@ -103,6 +109,17 @@ def score_results(matches, query, loc=None):
     return city_dictlist
 
 def check_inputs(query, latitude, longitude):
+    """ Perform various checks on inputs.
+
+    All the inner functions return False if the parameter(s) pass(es) the
+    checks, or an error message formatted as a dictionary to be parsed by jsonify() in the main code.
+
+    :param query: town name to match
+    :param latitude: latitude input or None
+    :param longitude: longitude input or None
+
+    :return: False or a dictionary with the relevant error message
+    """
 
     def invalid_query(query):
         """ Make sure query is a string. """
@@ -135,13 +152,13 @@ def check_inputs(query, latitude, longitude):
                 except ValueError:
                     return {'error': 'Invalid coordinate(s)'}
 
-    # Is query a valid string?
+    # Is query an invalid string?
     check = invalid_query(query)
     if not check:
         # Is one of the coordinates missing?
         check = missing_coords(latitude, longitude)
         if not check:
-            # Can coordinates be parsed as floats?
+            # Are the coordinates unable to be parsed as floats?
             check = invalid_coords([latitude, longitude])
 
     return check
